@@ -689,6 +689,7 @@ class TranslatorAPI(object):
     def output_function_decl(
             self
             , function         = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , return_type      = None # ctx.return_type
             , parameterlist    = None # ctx.parameterlist
             , parameterdescs   = None # ctx.parameterdescs
@@ -701,6 +702,7 @@ class TranslatorAPI(object):
     def output_struct_decl(
             self
             , decl_name        = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , decl_type        = None # ctx.decl_type
             , parameterlist    = None # ctx.parameterlist
             , parameterdescs   = None # ctx.parameterdescs
@@ -717,6 +719,7 @@ class TranslatorAPI(object):
     def output_enum_decl(
             self
             , enum             = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , parameterlist    = None # ctx.parameterlist
             , parameterdescs   = None # ctx.parameterdescs
             , sections         = None # ctx.sections
@@ -727,6 +730,7 @@ class TranslatorAPI(object):
     def output_typedef_decl(
             self
             , typedef          = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , sections         = None # ctx.sections
             , purpose          = None # ctx.decl_purpose
             , ):
@@ -996,6 +1000,7 @@ class ReSTTranslator(TranslatorAPI):
     def output_function_decl(
             self
             , function         = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , return_type      = None # ctx.return_type
             , parameterlist    = None # ctx.parameterlist
             , parameterdescs   = None # ctx.parameterdescs
@@ -1006,6 +1011,12 @@ class ReSTTranslator(TranslatorAPI):
         self.parser.ctx.offset = self.parser.ctx.decl_offset
         self.write_anchor(function)
         self.write_header(function, sec_level=2)
+
+        if headerlist:
+            self.write(".. code-block:: c\n\n")
+            for header in headerlist:
+                self.write("   #include <%s>\n" % header)
+            self.write("\n")
 
         if self.options.man_sect:
             self.write("\n.. kernel-doc-man:: %s.%s\n" % (function, self.options.man_sect) )
@@ -1099,6 +1110,7 @@ class ReSTTranslator(TranslatorAPI):
             self
             , decl_name        = None # ctx.decl_name
             , decl_type        = None # ctx.decl_type
+            , headerlist       = None # options.headerlist
             , parameterlist    = None # ctx.parameterlist
             , parameterdescs   = None # ctx.parameterdescs
             , parametertypes   = None # ctx.parametertypes
@@ -1200,6 +1212,7 @@ class ReSTTranslator(TranslatorAPI):
     def output_enum_decl(
             self
             , enum             = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , parameterlist    = None # ctx.parameterlist
             , parameterdescs   = None # ctx.parameterdescs
             , sections         = None # ctx.sections
@@ -1265,6 +1278,7 @@ class ReSTTranslator(TranslatorAPI):
     def output_typedef_decl(
             self
             , typedef          = None # ctx.decl_name
+            , headerlist       = None # options.headerlist
             , sections         = None # ctx.sections
             , purpose          = None # ctx.decl_purpose
             , ):
@@ -1333,6 +1347,7 @@ class ParseOptions(Container):
         self.no_header     = False # skip section header
         self.error_missing = True  # report missing names as errors / else warning
         self.verbose_warn  = True  # more warn messages
+        self.headerlist    = []    # list of required headers
 
         # self.gather_context: [True/False] Scan additional context from the
         # parsed source. E.g.: The list of exported symbols is a part of the
@@ -2519,6 +2534,7 @@ class Parser(SimpleLog):
         self.output_decl(
             self.ctx.decl_name, "function_decl"
             , function         = self.ctx.decl_name
+            , headerlist       = self.options.headerlist
             , return_type      = self.ctx.return_type
             , parameterlist    = self.ctx.parameterlist
             , parameterdescs   = self.ctx.parameterdescs
@@ -2545,6 +2561,7 @@ class Parser(SimpleLog):
         self.output_decl(
             self.ctx.decl_name, "union_decl"
             , decl_name        = self.ctx.decl_name
+            , headerlist       = self.options.headerlist
             , decl_type        = self.ctx.decl_type
             , parameterlist    = self.ctx.parameterlist
             , parameterdescs   = self.ctx.parameterdescs
@@ -2567,6 +2584,7 @@ class Parser(SimpleLog):
         self.output_decl(
             self.ctx.decl_name, "struct_decl"
             , decl_name        = self.ctx.decl_name
+            , headerlist       = self.options.headerlist
             , decl_type        = self.ctx.decl_type
             , parameterlist    = self.ctx.parameterlist
             , parameterdescs   = self.ctx.parameterdescs
@@ -2725,6 +2743,7 @@ class Parser(SimpleLog):
             self.output_decl(
                 self.ctx.decl_name, "enum_decl"
                 , enum             = self.ctx.decl_name
+                , headerlist       = self.options.headerlist
                 , parameterlist    = self.ctx.parameterlist
                 , parameterdescs   = self.ctx.parameterdescs
                 , sections         = self.ctx.sections
@@ -2767,6 +2786,7 @@ class Parser(SimpleLog):
             self.output_decl(
                 self.ctx.decl_name, "function_decl"
                 , function         = self.ctx.decl_name
+                , headerlist       = self.options.headerlist
                 , return_type      = self.ctx.return_type
                 , parameterlist    = self.ctx.parameterlist
                 , parameterdescs   = self.ctx.parameterdescs
@@ -2798,9 +2818,10 @@ class Parser(SimpleLog):
                                     , self.ctx.parameterlist )
                 self.output_decl(
                     self.ctx.decl_name, "typedef_decl"
-                        , typedef   = self.ctx.decl_name
-                        , sections  = self.ctx.sections
-                        , purpose   = self.ctx.decl_purpose )
+                        , typedef     = self.ctx.decl_name
+                        , headerlist  = self.options.headerlist
+                        , sections    = self.ctx.sections
+                        , purpose     = self.ctx.decl_purpose )
             else:
                 self.error("can't parse typedef!")
 

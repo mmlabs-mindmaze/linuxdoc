@@ -26,6 +26,7 @@ u"""
             :exp-ids:     <identifier [, identifiers [, ...]]>
             :known-attrs: <attr [, attrs [, ...]]>
             :functions: <function [, functions [, ...]]>
+            :headers: <header [, header [, ...]]>
             :module:    <prefix-id>
             :man-sect:  <man sect-no>
             :snippets:  <snippet [, snippets [, ...]]>
@@ -99,6 +100,9 @@ u"""
 
     ``functions <name [, names [, ...]]>``
         Include documentation for each named definition.
+
+    ``headers <name [, names [, ...]]>``
+        Include documentation about required headers
 
     ``module <prefix-id>``
         The option ``:module: <id-prefix>`` sets a module-name. The module-name is
@@ -300,6 +304,7 @@ class KernelDoc(Directive):
         , "export"     : directives.unchanged          # aka lines containing !E
         , "internal"   : directives.unchanged          # aka lines containing !I
         , "functions"  : directives.unchanged_required # aka lines containing !F
+        , "headers"    : directives.unchanged
         , "exp-method" : directives.unchanged_required
         , "exp-ids"    : directives.unchanged_required
         , "known-attrs": directives.unchanged_required
@@ -409,6 +414,10 @@ class KernelDoc(Directive):
             opts.error_missing = True
             opts.use_names.extend(
                 self.options["functions"].replace(","," ").split())
+
+        if "headers" in self.options:
+            opts.headerlist.extend(
+                self.options['headers'].replace(","," ").split())
 
         for pattern in exp_files:
             if pattern.startswith("./"): # "./" indicates a relative pathname
