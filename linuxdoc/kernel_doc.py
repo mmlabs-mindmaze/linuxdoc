@@ -1853,9 +1853,9 @@ class Parser(SimpleLog):
     def output_decl(self, name, out_type, **kwargs):
         self.ctx.offset = self.ctx.decl_offset
 
-        if name in self.translator.dumped_names:
+        if out_type + "." + name in self.translator.dumped_names:
             self.error("name '%s' used several times" % name)
-        self.translator.dumped_names.append(name)
+        self.translator.dumped_names.append(out_type + name)
 
         if isinstance(self.translator, NullTranslator):
             self.ctx.dump_storage.append(
