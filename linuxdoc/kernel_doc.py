@@ -2849,9 +2849,10 @@ class Parser(SimpleLog):
                                     , self.ctx.parameterlist )
                 self.output_decl(
                     self.ctx.decl_name, "typedef_decl"
-                    , typedef   = self.ctx.decl_name
-                    , sections  = self.ctx.sections
-                    , purpose   = self.ctx.decl_purpose )
+                        , typedef     = self.ctx.decl_name
+                        , headerlist  = self.options.headerlist
+                        , sections    = self.ctx.sections
+                        , purpose     = self.ctx.decl_purpose )
             else:
                 self.error("can't parse typedef!")
 

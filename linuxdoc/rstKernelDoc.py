@@ -132,6 +132,7 @@ class KernelDoc(Directive):
         , "export"     : directives.unchanged          # aka lines containing !E
         , "internal"   : directives.unchanged          # aka lines containing !I
         , "functions"  : directives.unchanged_required # aka lines containing !F
+        , "headers"    : directives.unchanged
         , "exp-method" : directives.unchanged_required
         , "exp-ids"    : directives.unchanged_required
         , "known-attrs": directives.unchanged_required

@@ -44,6 +44,7 @@ Here is a short overview of the directives options:
         :exp-method: <method>
         :exp-ids:    <identifier [, identifiers [, ...]]>
         :functions: <function [, functions [, ...]]>
+        :headers: <header [, header [, ...]]>
         :module:    <prefix-id>
         :man-sect:  <man sect-no>
         :snippets:  <snippet [, snippets [, ...]]>
@@ -121,6 +122,9 @@ these options make sense:
 
 ``:functions: <name [, names [, ...]]>`` (:ref:`kernel-doc-functions`, :ref:`kernel-doc-structs`)
    Include documentation for each named definition.
+
+``;headers <name [, names [, ...]]>``
+    Include documentation about required headers
 
 ``:module: <prefix-id>``
     The option ``:module: <id-prefix>`` sets a module-name.  The module-name is
