@@ -139,7 +139,7 @@ doc_sect_reST = RE(doc_com_section.pattern
                + r"|" + r"@\w[.\w]+[^:]*"                    # "@foo.bar: lorem" or
                + r"|" + r"\@\.\.\."                          # ellipsis "@...: lorem" or
                # a tribute to vintage markups, when in reST mode ...
-               + r"|description|context|returns?|notes?|examples?|introduction|intro"
+               + r"|description|context|returns?|notes?|examples?|introduction|intro|see"
                + r")"
                + r":(.*?)\s*$"    # this matches also strings like "http://..." (doc_sect_except)
                , flags = re.IGNORECASE)
@@ -1620,6 +1620,7 @@ class Parser(SimpleLog):
     section_intro     = "Introduction"
     section_context   = "Context"
     section_return    = "Return"
+    section_seealso   = "See also"
     section_default   = section_descr
 
     special_sections  = [ section_descr
@@ -1950,6 +1951,9 @@ class Parser(SimpleLog):
 
         elif title.lower() in ["return", "returns"]:
             retVal = self.section_return
+
+        elif title.lower() in ["see", "see also"]:
+            retVal = self.section_seealso
 
         return retVal
 
