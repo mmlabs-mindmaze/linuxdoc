@@ -1108,14 +1108,14 @@ class ReSTTranslator(TranslatorAPI):
         # argument list from the kernel-doc directive.
 
         if "See also" not in sections.keys():
-            content_list = list()
+            content_set = set()
             if 'Description' in sections:
                 fnlist = re.findall(r'([a-z0-9_]*)\(\)', sections['Description'], re.DOTALL)
-                while function in fnlist:
+                while function in list(fnlist):
                     fnlist.remove(function)  # remove self from the list
-                content_list = {':c:func:`{}`'.format(fn) for fn in fnlist}
-            if content_list:
-                content = ", ".join(content_list)
+                content_set = {':c:func:`{}`'.format(fn) for fn in fnlist}
+            if content_set:
+                content = ", ".join(content_set)
                 self.write_section(
                     "See also"
                     , content
