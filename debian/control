@@ -1,0 +1,18 @@
+Source: linuxdoc
+Maintainer: Gabriel Ganne <gabriel.ganne@mindmaze.ch>
+Section: utils
+Priority: extra
+Standards-Version: 3.9.8
+Vcs-browser: https://intranet.mindmaze.ch/bitbucket/scm/mmlab/linuxdoc.git
+Homepage: https://return42.github.io/linuxdoc
+Build-Depends: debhelper (>= 10), dh-python, python3-sphinx, python3-docutils,
+ python3-all, python3-setuptools
+
+
+Package: python3-sphinx-linuxdoc
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Description: sphinx kerneldoc module (Python 3)
+ This package contains the sphinx kerneldoc module
+ .
+ This package installs the library for Python 3.
