@@ -1024,10 +1024,7 @@ class ReSTTranslator(TranslatorAPI):
         # write function definition
 
         self.write("\n.. c:function:: ")
-        if return_type and return_type.endswith("*"):
-            self.write(return_type, function, "(")
-        else:
-            self.write(return_type, " ", function, "(")
+        self.write(return_type, " ", function, "(")
 
         p_list = []
 
@@ -1038,9 +1035,6 @@ class ReSTTranslator(TranslatorAPI):
                 # pointer to function
                 p_list.append("%s%s)(%s)"
                               % (self.FUNC_PTR[0], p_name, self.FUNC_PTR[1]))
-            elif p_type.endswith("*"):
-                # pointer
-                p_list.append("%s%s" % (p_type, p_name))
             else:
                 p_list.append("%s %s" % (p_type, p_name))
 
