@@ -1491,7 +1491,7 @@ class ParseOptions(Container):
         if self.exp_method == 'macro':
             proto_pattern = r"^\s*(?:%s)\s*\(\s*(\w*)\s*\)\s*"
         elif self.exp_method == 'attribute':
-            proto_pattern = r"(?:%s)(?:\s+\w+)*?\s+(\w*)\s*[(;]+"
+            proto_pattern = r"(?:%s)\s+(?:\w+[\s\*]*)*?(\w+)\s*[(;]+"
         else:
             LOG.error("Unknown exported symbol method: %s" % self.exp_method)
 
