@@ -68,13 +68,13 @@ from docutils.utils import new_document
 from docutils.parsers.rst import Directive
 from docutils.transforms import Transform
 
+import sphinx
 from sphinx import addnodes
 from sphinx.util.nodes import inline_all_toctrees
 from sphinx.util.console import bold, darkgreen     # pylint: disable=E0611
 from sphinx.writers.manpage import ManualPageWriter
 
 from sphinx.builders.manpage import ManualPageBuilder
-
 
 from .kernel_doc import Container
 
@@ -94,7 +94,9 @@ def setup(app):
 
     app.add_builder(KernelDocManBuilder)
     app.add_directive("kernel-doc-man", KernelDocMan)
-    app.add_config_value('author', "", 'env')
+    major, minor, patch = sphinx.version_info[:3]  # pylint: disable=invalid-name
+    if major == 1 and minor < 8:
+        app.add_config_value('author', "", 'env')
     app.add_node(kernel_doc_man
                  , html    = (skip_kernel_doc_man, None)
                  , latex   = (skip_kernel_doc_man, None)
