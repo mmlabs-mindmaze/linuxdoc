@@ -1,3 +1,12 @@
+linuxdoc (0.0.2) unstable; urgency=medium
+
+  * Updated debian package
+    - fix duplicated See also
+    - fix param with pointer
+    - update with new sphinx-doc
+
+ -- Nicolas Bourdaud <nicolas.bourdaud@mindmaze.ch>  Mon, 01 Jul 2019 14:04:30 +0200
+
 linuxdoc (0.0.1) unstable; urgency=medium
 
   * Initial debian package release
