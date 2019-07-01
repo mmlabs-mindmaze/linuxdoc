@@ -1105,7 +1105,7 @@ class ReSTTranslator(TranslatorAPI):
                 fnlist = re.findall(r'([a-z0-9_]*)\(\)', sections['Description'], re.DOTALL)
                 while function in fnlist:
                     fnlist.remove(function)  # remove self from the list
-                content_list = [':c:func:`{}`'.format(fn) for fn in fnlist]
+                content_list = {':c:func:`{}`'.format(fn) for fn in fnlist}
             if content_list:
                 content = ", ".join(content_list)
                 self.write_section(
