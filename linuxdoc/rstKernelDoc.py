@@ -1,198 +1,17 @@
 # -*- coding: utf-8; mode: python -*-
-# pylint: disable=R0912,R0914,R0915,W0221
-
+# pylint: disable=missing-docstring, invalid-name
 u"""
     rstKernelDoc
     ~~~~~~~~~~~~
 
     Implementation of the ``kernel-doc`` reST-directive.
 
-    :copyright:  Copyright (C) 2016  Markus Heiser
+    :copyright:  Copyright (C) 2018 Markus Heiser
     :license:    GPL Version 2, June 1991 see Linux/COPYING for details.
 
     The ``kernel-doc`` (:py:class:`KernelDoc`) directive includes contend from
     linux kernel source code comments.
 
-    Here is a short overview of the options:
-
-    .. code-block:: rst
-
-        .. kernel-doc:: <src-filename>
-            :doc: <section title>
-            :no-header:
-            :export:
-            :internal:
-            :exp-method:  <method>
-            :exp-ids:     <identifier [, identifiers [, ...]]>
-            :known-attrs: <attr [, attrs [, ...]]>
-            :functions: <function [, functions [, ...]]>
-            :headers: <header [, header [, ...]]>
-            :module:    <prefix-id>
-            :man-sect:  <man sect-no>
-            :snippets:  <snippet [, snippets [, ...]]>
-            :language:  <snippet-lang>
-            :linenos:
-            :debug:
-
-    The argument ``<src-filename>`` is required, it points to a source file in the
-    kernel source tree. The pathname is relative to kernel's root folder.  The
-    options have the following meaning, but be aware that not all combinations of
-    these options make sense:
-
-    ``doc <section title>``
-        Include content of the ``DOC:`` section titled ``<section title>``.  Spaces
-        are allowed in ``<section title>``; do not quote the ``<section title>``.
-
-        The next option make only sense in conjunction with option ``doc``:
-
-        ``no-header``
-            Do not output DOC: section's title. Useful, if the surrounding context
-            already has a heading, and the DOC: section title is only used as an
-            identifier. Take in mind, that this option will not suppress any native
-            reST heading markup in the comment (:ref:`reST-section-structure`).
-
-    ``export [<src-fname-pattern> [, ...]]``
-        Include documentation for all function, struct or whatever definition in
-        ``<src-filename>``, exported using EXPORT_SYMBOL macro (``EXPORT_SYMBOL``,
-        ``EXPORT_SYMBOL_GPL`` & ``EXPORT_SYMBOL_GPL_FUTURE``) either in
-        ``<src-filename>`` or in any of the files specified by
-        ``<src-fname-pattern>``.
-
-        The ``<src-fname-pattern>`` (glob) is useful when the kernel-doc comments
-        have been placed in header files, while EXPORT_SYMBOL are next to the
-        function definitions.
-
-    ``internal [<src-fname-pattern> [, ...]]``
-        Include documentation for all documented definitions, **not** exported using
-        EXPORT_SYMBOL macro either in ``<src-filename>`` or in any of the files
-        specified by ``<src-fname-pattern>``.
-
-    ``exp-method <method>``
-        Change the way exported symbols are specified in source code.
-        Default value ('macro') if not provided can be set globally by
-        kernel_doc_exp_method in the sphinx configuration.
-	``<method>`` must one of the following value:
-
-        ``macro``
-            Exported symbols are specified by macros (whose names are
-            controlled by ``exp-ids`` option) invoked in the source the
-            following way: THIS_IS_AN_EXPORTED_SYMBOL(symbol)
-
-        ``attribute``
-            Exported symbols are specified definition using a specific
-            attribute (controlled by ``exp-ids`` option) either in their
-            declaration or definition:
-            THIS_IS_AN_EXPORTED_SYMBOL int symbol(void* some_arg) {...}
-
-    ``exp-ids <identifier [, identifiers [, ...]]>``
-        Use the specified list of identifiers instead of default value:
-        EXPORT_SYMBOL, EXPORT_SYMBOL_GPL, EXPORT_SYMBOL_GPL_FUTURE. Default
-        value can be overriden globally by sphinx configuration option:
-        kernel_doc_exp_ids
-
-    ``known-attrs <attr [, attrs [, ...]]>``
-        Specified a list of function attribute that are known and must be
-        hidden when displaying function prototype. When ``exp-method`` is
-        set to 'attribute' the list in ``exp-ids`` is considered as known
-        and added implicitely to this list of known attributes. The default
-        list is empty and can be adjusted by the sphinx configuration option
-        kernel_doc_known_attrs
-
-    ``functions <name [, names [, ...]]>``
-        Include documentation for each named definition.
-
-    ``headers <name [, names [, ...]]>``
-        Include documentation about required headers
-
-    ``module <prefix-id>``
-        The option ``:module: <id-prefix>`` sets a module-name. The module-name is
-        used as a prefix for automatic generated IDs (reference anchors).
-
-    ``man-sect <sect-no>``
-
-      Section number of the manual pages (see man man-pages). The man-pages are build
-      by the ``kernel-doc-man`` builder.
-
-    ``snippets <name [, names [, ...]]>``
-        Inserts the source-code passage(s) marked with the snippet ``name``. The
-        snippet is inserted with a `code-block:: <http://www.sphinx-doc.org/en/stable/markup/code.html>`_
-        directive.
-
-        The next options make only sense in conjunction with option ``snippets``:
-
-        ``language <highlighter>``
-            Set highlighting language of the snippet code-block.
-
-        ``linenos``
-            Set line numbers in the snippet code-block.
-
-    ``debug``
-        Inserts a code-block with the generated reST source. This might sometimes
-        helpful to see how the kernel-doc parser transforms the kernel-doc markup to
-        reST markup.
-
-    The following example shows how to insert documentation from the source file
-    ``/drivers/gpu/drm/drm_drv.c``. In this example the documentation from the
-    ``DOC:`` section with the title "driver instance overview" and the
-    documentation of all exported symbols (EXPORT_SYMBOL) is included in the
-    reST tree.
-
-    .. code-block:: rst
-
-        .. kernel-doc::  drivers/gpu/drm/drm_drv.c
-            :export:
-            :doc:        driver instance overview
-
-    An other example is to use only one function description.
-
-    .. code-block:: rst
-
-        .. kernel-doc::  include/media/i2c/tvp7002.h
-            :functions:  tvp7002_config
-            :module:     tvp7002
-
-    This will produce the following reST markup to include:
-
-    .. code-block:: rst
-
-        .. _`tvp514x.tvp514x_platform_data`:
-
-        struct tvp514x_platform_data
-        ============================
-
-        .. c:type:: tvp514x_platform_data
-
-
-        .. _`tvp514x.tvp514x_platform_data.definition`:
-
-        Definition
-        ----------
-
-        .. code-block:: c
-
-            struct tvp514x_platform_data {
-                bool clk_polarity;
-                bool hs_polarity;
-                bool vs_polarity;
-            }
-
-        .. _`tvp514x.tvp514x_platform_data.members`:
-
-        Members
-        -------
-
-        clk_polarity
-            Clock polarity of the current interface.
-
-        hs_polarity
-            HSYNC Polarity configuration for current interface.
-
-        vs_polarity
-            VSYNC Polarity configuration for current interface.
-
-    The last example illustrates, that the option ``:module: tvp514x`` is used
-    as a prefix for anchors. E.g. ```ref:`tvp514x.tvp514x_platform_data.members¸```
-    refers to the to the member description of ``struct tvp514x_platform_data``.
 """
 
 # ==============================================================================
@@ -210,8 +29,7 @@ from docutils.parsers.rst import Directive, directives
 from docutils.utils import SystemMessage
 from docutils.statemachine import ViewList
 
-from sphinx.ext.autodoc import AutodocReporter
-
+from . import compat
 from . import kernel_doc as kerneldoc
 
 # ==============================================================================
@@ -223,6 +41,8 @@ from . import kernel_doc as kerneldoc
 __version__  = '1.0'
 
 PARSER_CACHE = dict()
+
+app_log = compat.getLogger('application')
 
 # ==============================================================================
 def setup(app):
@@ -247,6 +67,8 @@ def setup(app):
 class KernelDocParser(kerneldoc.Parser):
 # ==============================================================================
 
+    # pylint: disable=deprecated-method
+
     def __init__(self, app, *args, **kwargs):
         super(KernelDocParser, self).__init__(*args, **kwargs)
         self.app = app
@@ -255,25 +77,27 @@ class KernelDocParser(kerneldoc.Parser):
     # bind the parser logging to the sphinx application
     # -------------------------------------------------
 
+    # pylint: disable=arguments-differ
+
     def error(self, message, **replace):
         replace["fname"]   = self.options.fname
         replace["line_no"] = replace.get("line_no", self.ctx.line_no)
         self.errors += 1
         message = ("%(fname)s:%(line_no)s: [kernel-doc ERROR] : " + message) % replace
-        self.app.warn(message)
+        app_log.warn(message)
 
     def warn(self, message, **replace):
         replace["fname"]   = self.options.fname
         replace["line_no"] = replace.get("line_no", self.ctx.line_no)
         self.warnings += 1
         message = ("%(fname)s:%(line_no)s: [kernel-doc WARN] : " + message) % replace
-        self.app.warn(message)
+        app_log.warn(message)
 
     def info(self, message, **replace):
         replace["fname"]   = self.options.fname
         replace["line_no"] = replace.get("line_no", self.ctx.line_no)
         message = ("%(fname)s:%(line_no)s: [kernel-doc INFO] : " + message) % replace
-        self.app.verbose(message)
+        app_log.verbose(message)
 
     def debug(self, message, **replace):
         if self.app.verbosity < 2:
@@ -281,7 +105,7 @@ class KernelDocParser(kerneldoc.Parser):
         replace["fname"]   = self.options.fname
         replace["line_no"] = replace.get("line_no", self.ctx.line_no)
         message = ("%(fname)s:%(line_no)s: [kernel-doc DEBUG] : " + message) % replace
-        self.app.debug(message)
+        app_log.debug(message)
 
 
 # ==============================================================================
@@ -298,13 +122,16 @@ class KernelDoc(Directive):
     final_argument_whitespace = True
 
     option_spec = {
+
+        # see https://github.com/PyCQA/pylint/issues/289
+        # pylint: disable=bad-continuation
+
         "doc"          : directives.unchanged_required # aka lines containing !P
         , "no-header"  : directives.flag
 
         , "export"     : directives.unchanged          # aka lines containing !E
         , "internal"   : directives.unchanged          # aka lines containing !I
         , "functions"  : directives.unchanged_required # aka lines containing !F
-        , "headers"    : directives.unchanged
         , "exp-method" : directives.unchanged_required
         , "exp-ids"    : directives.unchanged_required
         , "known-attrs": directives.unchanged_required
@@ -326,7 +153,7 @@ class KernelDoc(Directive):
 
     }
 
-    def getParserOptions(self):
+    def getParserOptions(self):  # pylint: disable=too-many-branches, too-many-statements
 
         fname     = self.arguments[0]
         src_tree  = kerneldoc.SRCTREE
@@ -372,8 +199,8 @@ class KernelDoc(Directive):
             , known_attrs   = (known_attrs or "").replace(","," ").split()
             ,)
 
-        if ("doc" not in self.options
-            and opts.man_sect is None):
+        if ( "doc" not in self.options
+             and opts.man_sect is None):
             opts.man_sect = self.env.config.kernel_doc_mansect
 
         opts.set_defaults()
@@ -386,11 +213,11 @@ class KernelDoc(Directive):
         opts.skip_preamble = True
         opts.skip_epilog   = True
 
-        if ("doc" not in self.options
-            and "export" not in self.options
-            and "internal" not in self.options
-            and "functions" not in self.options
-            and "snippets" not in self.options):
+        if ( "doc" not in self.options
+             and "export" not in self.options
+             and "internal" not in self.options
+             and "functions" not in self.options
+             and "snippets" not in self.options ):
             # if no explicit content is selected, then print all, including all
             # DOC sections
             opts.use_all_docs = True
@@ -427,8 +254,8 @@ class KernelDoc(Directive):
             else:
                 pattern = path.join(kerneldoc.SRCTREE, pattern)
 
-            if (not glob.has_magic(pattern)
-                and not path.lexists(pattern)):
+            if ( not glob.has_magic(pattern)
+                 and not path.lexists(pattern) ):
                 # if pattern is a filename (is not a glob pattern) and this file
                 # does not exists, an error is raised.
                 raise FaultyOption("file not found: %s" % pattern)
@@ -478,7 +305,7 @@ class KernelDoc(Directive):
 
         if parser is None:
             self.env.note_dependency(opts.fname)
-            #self.env.app.info("parse kernel-doc comments from: %s" % opts.fname)
+            #app_log.info("parse kernel-doc comments from: %s" % opts.fname)
             parser = KernelDocParser(self.env.app, opts, kerneldoc.NullTranslator())
             parser.parse()
             PARSER_CACHE[opts.fname] = parser
@@ -489,17 +316,18 @@ class KernelDoc(Directive):
 
     def run(self):
 
-        # pylint: disable=W0201
-        self.parser = None
-        self.doc    = self.state.document
-        self.env    = self.doc.settings.env
-        self.nodes  = []
+        # FIXME: think about again; these members has been added for convenience
+        self.parser = None                     # pylint: disable=attribute-defined-outside-init
+        self.doc    = self.state.document      # pylint: disable=attribute-defined-outside-init
+        self.env    = self.doc.settings.env    # pylint: disable=attribute-defined-outside-init
+        self.nodes  = []                       # pylint: disable=attribute-defined-outside-init
 
         try:
             if not self.doc.settings.file_insertion_enabled:
                 raise FaultyOption('docutils: file insertion disabled')
             opts = self.getParserOptions()
-            self.parser = self.parseSource(opts)
+            # FIXME: think about again; these members has been added for convenience
+            self.parser = self.parseSource(opts) # pylint: disable=attribute-defined-outside-init
             self.nodes.extend(self.getNodes())
 
         except FaultyOption as exc:
@@ -508,12 +336,11 @@ class KernelDoc(Directive):
         return self.nodes
 
 
-    def getNodes(self):
+    def getNodes(self):  # pylint: disable=too-many-branches, too-many-statements, too-many-locals
 
         translator = kerneldoc.ReSTTranslator()
         lines      = ""
         content    = WriterList(self.parser)
-        node       = nodes.section()
 
         # translate
 
@@ -578,14 +405,17 @@ class KernelDoc(Directive):
             for l in lines.split("\n"):
                 content.append(l, reSTfname, self.lineno)
 
-        buf = self.state.memo.title_styles, self.state.memo.section_level, self.state.memo.reporter
-        self.state.memo.reporter = AutodocReporter(content, self.state.memo.reporter)
-        self.state.memo.title_styles, self.state.memo.section_level = [], 0
-        try:
-            self.state.nested_parse(content, 0, node, match_titles=1)
-        finally:
-            self.state.memo.title_styles, self.state.memo.section_level, self.state.memo.reporter = buf
-
+        node = nodes.section()
+        # necessary so that the child nodes get the right source/line set
+        node.document = self.state.document
+        with compat.switch_source_input(self.state, content):
+            # hack around title style bookkeeping
+            buf = self.state.memo.title_styles, self.state.memo.section_level
+            self.state.memo.title_styles, self.state.memo.section_level = [], 0
+            try:
+                self.state.nested_parse(content, 0, node, match_titles=1)
+            finally:
+                self.state.memo.title_styles, self.state.memo.section_level = buf
         return node.children
 
 

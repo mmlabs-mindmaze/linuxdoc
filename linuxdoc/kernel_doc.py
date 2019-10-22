@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; mode: python -*-
-# pylint: disable=C0103,C0302,C0325,R0912,R0914,R0915,W0221
+#
+# pylint: disable=missing-docstring, arguments-differ, invalid-name
+# pylint: disable=too-many-arguments, too-many-locals, too-many-branches
+# pylint: disable=too-many-nested-blocks, too-many-lines
+# pylint: disable=too-many-statements, useless-object-inheritance
 
 u"""
     kernel_doc
@@ -8,7 +12,7 @@ u"""
 
     Implementation of the ``kernel-doc`` parser.
 
-    :copyright:  Copyright (C) 2016  Markus Heiser
+    :copyright:  Copyright (C) 2018 Markus Heiser
     :license:    GPL Version 2, June 1991 see Linux/COPYING for details.
 
     The kernel-doc parser extracts documentation from Linux kernel's source code
@@ -23,15 +27,12 @@ u"""
 
     Compared with the Perl kernel-doc script, this implementation has additional
     features like *parse options* for a smooth integration of reStructuredText
-    (reST) markup in the kernel's source code comments. In addition, this
-    rewrite brings the functionalities, which has been spread in *docproc* and
-    make files (e.g. working with *EXPORTED_SYMBOLS*) back to the kernel-doc
-    parse process. In combination with a (separate) *kernel-doc* reST directive
-    (which uses this module), the documentation generation becomes more clear
-    and flexible.
+    (reST) markup in the kernel's source code comments.  In combination with the
+    (separate) *kernel-doc* reST directive (which uses this module), the
+    documentation generation becomes more clear and flexible.
 
-    The architecture is simple and consists of three types of objects (three
-    classes).
+    The architecture of the parser is simple and consists of three types of
+    objects (three classes).
 
     * class Parser: The parser parses the source-file and dumps extracted
       kernel-doc data.
@@ -52,6 +53,7 @@ u"""
     (e.g. with the ReSTTranslator) and the option container.
 
     With parsing the source files only once, the building time is reduced n-times.
+
 """
 
 # ==============================================================================
@@ -124,31 +126,34 @@ doc_sect_except  = RE(doc_com.pattern + r"[^\s@](.*)?:[^\s]")
 #doc_sect = RE(doc_com.pattern + r"([" + doc_special.pattern + r"]?[\w\s]+):(.*)")
 # "section header:" names must be unique per function (or struct,union, typedef,
 # enum). Additional condition: the header name should have 3 characters at least!
-doc_sect  = RE(doc_com_section.pattern
-               + r"("
-               + r"@\w[^:]*"                                 # "@foo: lorem" or
-               + r"|" + r"@\w[.\w]+[^:]*"                    # "@foo.bar: lorem" or
-               + r"|" + r"\@\.\.\."                          # ellipsis "@...: lorem" or
-               + r"|" + r"\w[\w\s]+\w"                       # e.g. "Return: lorem"
-               + r")"
-               + r":(.*?)\s*$")   # this matches also strings like "http://..." (doc_sect_except)
+doc_sect  = RE(
+    doc_com_section.pattern
+    + r"("
+    + r"@\w[^:]*"                                 # "@foo: lorem" or
+    + r"|" + r"@\w[.\w]+[^:]*"                    # "@foo.bar: lorem" or
+    + r"|" + r"\@\.\.\."                          # ellipsis "@...: lorem" or
+    + r"|" + r"\w[\w\s]+\w"                       # e.g. "Return: lorem"
+    + r")"
+    + r":(.*?)\s*$")   # this matches also strings like "http://..." (doc_sect_except)
 
-doc_sect_reST = RE(doc_com_section.pattern
-               + r"("
-               + r"@\w[^:]*"                                 # "@foo: lorem" or
-               + r"|" + r"@\w[.\w]+[^:]*"                    # "@foo.bar: lorem" or
-               + r"|" + r"\@\.\.\."                          # ellipsis "@...: lorem" or
-               # a tribute to vintage markups, when in reST mode ...
-               + r"|description|context|returns?|notes?|examples?|introduction|intro|see"
-               + r")"
-               + r":(.*?)\s*$"    # this matches also strings like "http://..." (doc_sect_except)
-               , flags = re.IGNORECASE)
+doc_sect_reST = RE(
+    doc_com_section.pattern
+    + r"("
+    + r"@\w[^:]*"                                 # "@foo: lorem" or
+    + r"|" + r"@\w[.\w]+[^:]*"                    # "@foo.bar: lorem" or
+    + r"|" + r"\@\.\.\."                          # ellipsis "@...: lorem" or
+    # a tribute to vintage markups, when in reST mode ...
+    + r"|description|context|returns?|notes?|examples?|introduction|intro"
+    + r")"
+    + r":(.*?)\s*$"    # this matches also strings like "http://..." (doc_sect_except)
+    , flags = re.IGNORECASE)
 
-reST_sect = RE(doc_com_section.pattern
-              + r"("
-              r"\w[\w\s]+\w"
-              + r")"
-              + r":\s*$")
+reST_sect = RE(
+    doc_com_section.pattern
+    + r"("
+    r"\w[\w\s]+\w"
+    + r")"
+    + r":\s*$")
 
 doc_content      = RE(doc_com_body.pattern + r"(.*)")
 doc_block        = RE(doc_com.pattern + r"DOC:\s*(.*)?")
@@ -281,7 +286,7 @@ def highlight_parser(text, map_table):
             continue
 
         RST_INDENT.search(row)
-        indent = len(RST_INDENT[0].expandtabs()) 
+        indent = len(RST_INDENT[0].expandtabs())
 
         if state == 'highlight':
             out.append(map_row(row, map_table))
@@ -303,9 +308,6 @@ def highlight_parser(text, map_table):
                 out.append(row)
 
     return "\n".join(out)
-
-
-
 
 
 # ==============================================================================
@@ -330,15 +332,13 @@ class Container(dict):
     def __setattr__(self, attr, val):
         self[attr] = val
 
-class DevNull(object):
+class DevNull(object): # pylint: disable=too-few-public-methods
     """A dev/null file descriptor."""
     def write(self, *args, **kwargs):
         pass
 DevNull = DevNull()
 
-KBUILD_VERBOSE = int(os.getenv("KBUILD_VERBOSE", "0"))
-KERNELVERSION  = os.getenv("KERNELVERSION", "unknown kernel version")
-SRCTREE        = os.getenv("srctree", "")
+SRCTREE        = OS_ENV.get("srctree", "")
 GIT_REF        = ("Linux kernel source tree:"
                   " `%(rel_fname)s <https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/"
                   "%(rel_fname)s>`__")
@@ -355,10 +355,9 @@ STREAM = Container(
     , log_out  = sys.__stderr__
     , )
 
-VERBOSE = bool(KBUILD_VERBOSE)
+VERBOSE = False
 DEBUG   = False
 INSPECT = False
-QUIET   = False
 
 class SimpleLog(object):
 
@@ -370,8 +369,6 @@ class SimpleLog(object):
         STREAM.log_out.write(self.LOG_FORMAT % replace)
 
     def warn(self, message, **replace):
-        if QUIET:
-            return
         message = message % replace
         replace.update(dict(message = message, logclass = "WARN"))
         STREAM.log_out.write(self.LOG_FORMAT % replace)
@@ -394,13 +391,14 @@ LOG = SimpleLog()
 
 # ==============================================================================
 def main():
+    # pylint: disable=global-statement
 # ==============================================================================
 
-    global VERBOSE, DEBUG # pylint: disable=W0603
+    global VERBOSE, DEBUG
 
-    epilog = (u"This implementation of uses the kernel-doc parser"
+    epilog = (u"This implementation uses the kernel-doc parser"
               " from the linuxdoc extension, for detail informations read"
-              " http://return42.github.io/sphkerneldoc/books/kernel-doc-HOWTO")
+              " https://return42.github.io/linuxdoc/cmd-line.html#kernel-doc")
 
     CLI = argparse.ArgumentParser(
         description = (
@@ -476,7 +474,7 @@ def main():
         , help    = "print documentation of all exported symbols")
 
     CLI.add_argument(
-         "--internal"
+        "--internal"
         , action  = "store_true"
         , help    = ("print documentation of all symbols that are documented,"
                      " but not exported" ))
@@ -506,15 +504,15 @@ def main():
         "--known-attrs"
         , default = ""
         , nargs   = "+"
-        , help    = ("provides list of known attributes that has to be"
-                     " hidden from" " function prototypes"))
+        , help    = ("provides a list of known attributes that has to be"
+                     " hidden when displaying function prototypes"))
 
     CMD     = CLI.parse_args()
     VERBOSE = CMD.verbose
     DEBUG   = CMD.debug
 
     if CMD.quiet:
-        STREAM.log_out = DevNull # pylint: disable=W0201
+        STREAM.log_out = DevNull  # pylint: disable=attribute-defined-outside-init
 
     LOG.debug(u"CMD: %(CMD)s", CMD=CMD)
 
@@ -1024,7 +1022,10 @@ class ReSTTranslator(TranslatorAPI):
         # write function definition
 
         self.write("\n.. c:function:: ")
-        self.write(return_type, " ", function, "(")
+        if return_type and re.search(r"\s\*+$", return_type):
+            self.write(return_type, function, "(")
+        else:
+            self.write(return_type, " ", function, "(")
 
         p_list = []
 
@@ -1035,6 +1036,9 @@ class ReSTTranslator(TranslatorAPI):
                 # pointer to function
                 p_list.append("%s%s)(%s)"
                               % (self.FUNC_PTR[0], p_name, self.FUNC_PTR[1]))
+            elif re.search(r"\s\*+$", p_type):
+                # pointer
+                p_list.append("%s%s" % (p_type, p_name))
             else:
                 p_list.append("%s %s" % (p_type, p_name))
 
@@ -1064,6 +1068,10 @@ class ReSTTranslator(TranslatorAPI):
             if self.FUNC_PTR.search(p_type):
                 # pointer to function
                 param = ":param %s%s)(%s):" % (self.FUNC_PTR[0], p_name, self.FUNC_PTR[1])
+            elif p_type.endswith("*"):
+                # pointer & pointer to pointer
+                param = ":param %s:" % (p_name)
+                param_type = ":type %s: %s" % (p_name, p_type)
             elif p_name == "...":
                 param = ":param ellipsis ellipsis:"
             else:
@@ -1316,6 +1324,9 @@ class ReSTTranslator(TranslatorAPI):
 class ParseOptions(Container):
 # ------------------------------------------------------------------------------
 
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=global-statement
+
     PARSE_OPTION_RE = r"^/\*+\s*parse-%s:\s*([a-zA-Z0-9_-]*?)\s*\*/+\s*$"
     PARSE_OPTIONS   = [
         ("highlight", ["on","off"], "setOnOff")
@@ -1442,8 +1453,8 @@ class ParseOptions(Container):
 
     def add_filters(self, parse_options):
 
-        def setINSPECT(name, val): # pylint: disable=W0613
-            global INSPECT         # pylint: disable=W0603
+        def setINSPECT(name, val): # pylint: disable=unused-argument
+            global INSPECT
             INSPECT = bool(val == "on")
 
         _actions = dict(
@@ -1465,7 +1476,7 @@ class ParseOptions(Container):
                 value = regexpr[0]
                 if val_list and value not in val_list:
                     parser.error("unknown parse-%(name)s value: '%(value)s'"
-                               , name=name, value=value)
+                                 , name=name, value=value)
                 else:
                     opt_val = action(name, value)
                     if opt_val  is not None:
@@ -1481,7 +1492,7 @@ class ParseOptions(Container):
         if self.exp_method == 'macro':
             proto_pattern = r"^\s*(?:%s)\s*\(\s*(\w*)\s*\)\s*"
         elif self.exp_method == 'attribute':
-            proto_pattern = r"(?:%s)\s+(?:\w+[\s\*]*)*?(\w+)\s*[(;]+"
+            proto_pattern = r"(?:%s)(?:\s+\**\w+\**)*?\s+\**(\w+)\s*[(;]+"
         else:
             LOG.error("Unknown exported symbol method: %s" % self.exp_method)
 
@@ -1491,6 +1502,8 @@ class ParseOptions(Container):
 # ------------------------------------------------------------------------------
 class ParserContext(Container):
 # ------------------------------------------------------------------------------
+
+    # pylint: disable=too-many-instance-attributes
 
     def dumpCtx(self):
         # dumps options which are variable from parsing source-code
@@ -1530,7 +1543,8 @@ class ParserContext(Container):
         self.decl_name         = ""
         self.decl_type         = ""  # [struct|union|enum|typedef|function]
         self.decl_purpose      = ""
-        self.return_type       = ""
+        self.definition        = ""  # defintion of the struct|union|enum
+        self.return_type       = ""  # function's return type definition)
 
         #self.struct_actual     = ""
 
@@ -1592,6 +1606,8 @@ class ParserBuggy(RuntimeError):
 # ------------------------------------------------------------------------------
 class Parser(SimpleLog):
 # ------------------------------------------------------------------------------
+
+    # pylint: disable=too-many-public-methods
 
     u"""
     kernel-doc comments parser
@@ -1719,7 +1735,7 @@ class Parser(SimpleLog):
 
         Names of exported symbols gathered in :py:attr:`ParserContext.exported`.
         The list contains names (symbols) which are exported using the
-        pattern specified in ctx_opts
+        pattern specified in opts.
 
         .. hint::
 
@@ -1745,7 +1761,7 @@ class Parser(SimpleLog):
            files.
         """
 
-        expsym_re = opts.get_exported_symbols_re();
+        expsym_re = opts.get_exported_symbols_re()
         LOG.debug("gather_context() regExp: %(pattern)s", pattern=expsym_re.pattern)
         for name in expsym_re.findall(src):
             LOG.info("exported symbol: %(name)s", name = name)
@@ -1814,7 +1830,7 @@ class Parser(SimpleLog):
             self.warn("total errors: %(errors)s / total warnings: %(warnings)s"
                       , errors=self.errors, warnings=self.warnings)
             self.warnings -= 1
-        global INSPECT # pylint: disable=W0603
+        global INSPECT  # pylint: disable=global-statement
         INSPECT = False
 
     def feed(self, data, eof=False):
@@ -1825,7 +1841,7 @@ class Parser(SimpleLog):
             # all lines in self.rawdata until EOF. On EOF, scan rawdata about
             # (e.g.) exported symbols and after this, continue with the *normal*
             # parsing.
-            if not eof:
+            if not eof:  # pylint: disable=no-else-return
                 return
             else:
                 self.gather_context(self.rawdata, self.ctx, self.options)
@@ -1855,7 +1871,7 @@ class Parser(SimpleLog):
                 state(l)
             except Exception as _exc:
                 self.warn("total errors: %(errors)s / warnings: %(warnings)s"
-                           , errors=self.errors, warnings=self.warnings)
+                          , errors=self.errors, warnings=self.warnings)
                 self.warnings -= 1
                 self.error("unhandled exception in line: %(l)s", l=l)
                 raise
@@ -1992,10 +2008,10 @@ class Parser(SimpleLog):
                 # comments like:
                 #   * @arg: lorem
                 #   * Return: foo
-                if (new_sect
-                    and self.ctx.section.startswith("@")
-                    and not new_sect.startswith("@")
-                    and not new_sect in self.special_sections ):
+                if ( new_sect
+                     and self.ctx.section.startswith("@")
+                     and not new_sect.startswith("@")
+                     and not new_sect in self.special_sections ):
                     new_sect = ""
                     new_cont = ""
 
@@ -2099,8 +2115,8 @@ class Parser(SimpleLog):
                 else:
                     self.ctx.decl_purpose = cont_line.strip()
             else:
-                if (self.options.markup == "reST"
-                    and self.ctx.section.startswith("@")):
+                if ( self.options.markup == "reST"
+                     and self.ctx.section.startswith("@")):
                     # FIXME: I doubt if it is a good idea to strip leading
                     # whitespaces in parameter description, but *over all* we
                     # get better reST output.
@@ -2146,7 +2162,7 @@ class Parser(SimpleLog):
                 self.error("odd construct, gathering documentation of a function"
                            " outside of the main block?!?")
 
-        elif (self.ctx.decl_type == 'function'):
+        elif self.ctx.decl_type == 'function':
             self.process_state3_function(line)
         else:
             self.process_state3_type(line)
@@ -2172,8 +2188,8 @@ class Parser(SimpleLog):
 
         elif doc_content.match(line):
             cont = doc_content[0]
-            if (not cont.strip() # dismiss leading newlines
-                and not self.ctx.contents):
+            if ( not cont.strip() # dismiss leading newlines
+                 and not self.ctx.contents):
                 pass
             else:
                 self.ctx.contents += doc_content[0] + "\n"
@@ -2181,8 +2197,8 @@ class Parser(SimpleLog):
     def state_5(self, line):
         u"""state: 5 - gathering documentation outside main block"""
 
-        if (self.split_doc_state == 1
-            and doc_state5_sect.match(line)):
+        if ( self.split_doc_state == 1
+             and doc_state5_sect.match(line)):
 
             # First line (split_doc_state 1) needs to be a @parameter
             self.ctx.section  = self.sect_title(doc_state5_sect[0].strip())
@@ -2243,9 +2259,9 @@ class Parser(SimpleLog):
         elif stripProto.match(line):
             self.ctx.prototype += " " + stripProto[0]
 
-        if (MACRO_define.search(line)
-            or "{" in line
-            or ";" in line ):
+        if ( MACRO_define.search(line)
+             or "{" in line
+             or ";" in line ):
 
             # strip cr&nl, strip C89 comments, strip leading whitespaces
             self.ctx.prototype = C89_comments.sub(
@@ -2254,9 +2270,9 @@ class Parser(SimpleLog):
             if SYSCALL_DEFINE.search(self.ctx.prototype):
                 self.ctx.prototype = self.syscall_munge(self.ctx.prototype)
 
-            if (TRACE_EVENT.search(self.ctx.prototype)
-                or DEFINE_EVENT.search(self.ctx.prototype)
-                or DEFINE_SINGLE_EVENT.search(self.ctx.prototype) ):
+            if ( TRACE_EVENT.search(self.ctx.prototype)
+                 or DEFINE_EVENT.search(self.ctx.prototype)
+                 or DEFINE_SINGLE_EVENT.search(self.ctx.prototype) ):
                 self.ctx.prototype = self.tracepoint_munge(self.ctx.prototype)
 
             self.ctx.prototype = self.ctx.prototype.strip()
@@ -2462,7 +2478,7 @@ class Parser(SimpleLog):
 
         # Remove known attributes from function prototype
         known_attrs = self.options.known_attrs
-        if (self.options.exp_method == 'attribute'):
+        if self.options.exp_method == 'attribute':
             known_attrs.extend(self.options.exp_ids)
         for attr in known_attrs:
             proto = re.sub(r"%s +" % attr, "", proto)
@@ -2831,10 +2847,9 @@ class Parser(SimpleLog):
                                     , self.ctx.parameterlist )
                 self.output_decl(
                     self.ctx.decl_name, "typedef_decl"
-                        , typedef     = self.ctx.decl_name
-                        , headerlist  = self.options.headerlist
-                        , sections    = self.ctx.sections
-                        , purpose     = self.ctx.decl_purpose )
+                    , typedef   = self.ctx.decl_name
+                    , sections  = self.ctx.sections
+                    , purpose   = self.ctx.decl_purpose )
             else:
                 self.error("can't parse typedef!")
 
@@ -2940,9 +2955,9 @@ class Parser(SimpleLog):
         p_name  = p_name.strip()
         p_type  = p_type.strip()
 
-        if (self.anon_struct_union
-            and not p_type
-            and p_name == "}"):
+        if ( self.anon_struct_union
+             and not p_type
+             and p_name == "}" ):
             # ignore the ending }; from anon. struct/union
             return
 
@@ -2960,7 +2975,7 @@ class Parser(SimpleLog):
             p_name = "void"
             self.ctx.parameterdescs[p_name] = "no arguments"
 
-        elif not p_type and (p_name == "struct" or p_name == "union"):
+        elif not p_type and (p_name in ("struct", "union")):
             # handle unnamed (anonymous) union or struct:
             p_type  = p_name
             p_name = "{unnamed_" + p_name + "}"
@@ -2990,10 +3005,9 @@ class Parser(SimpleLog):
         # also ignore unnamed structs/unions;
 
         if not self.anon_struct_union:
-            if (not self.ctx.parameterdescs.get(p_name, None)
-                and not p_name.startswith("#")):
-
-                if p_type == "function" or p_type == "enum":
+            if ( not self.ctx.parameterdescs.get(p_name, None)
+                 and not p_name.startswith("#") ):
+                if p_type in ("function", "enum"):
                     self.warn("Function parameter or member '%(p_name)s' not "
                               "described in '%(decl_name)s'."
                               , p_name = p_name
@@ -3051,8 +3065,8 @@ class Parser(SimpleLog):
         # Ignore an empty return type (It's a macro) and ignore functions with a
         # "void" return type. (But don't ignore "void *")
 
-        if (not return_type
-            or re.match(r"void\s*\w*\s*$", return_type)):
+        if ( not return_type
+             or re.match(r"void\s*\w*\s*$", return_type) ):
             self.debug("check_return_section(): ignore void")
             return
 
@@ -3061,15 +3075,18 @@ class Parser(SimpleLog):
                       , func = decl_name, line_no = self.ctx.decl_offset)
         else:
             self.debug("check_return_section(): return-value of %(func)s() OK"
-                      , func = decl_name)
+                       , func = decl_name)
 
 # ==============================================================================
 # 2cent debugging & introspection
 # ==============================================================================
 
 def CONSOLE(arround=5, frame=None):
-    # pylint: disable=C0321,C0410
-    import inspect, code, linecache
+
+    import inspect
+    import code
+    import linecache
+
     sys.stderr.flush()
     sys.stdout.flush()
 
@@ -3082,7 +3099,8 @@ def CONSOLE(arround=5, frame=None):
 
     histfile = os.path.join(os.path.expanduser("~"), ".kernel-doc-history")
     try:
-        import readline, rlcompleter  # pylint: disable=W0612
+        import readline
+        import rlcompleter
         readline.set_completer(rlcompleter.Completer(namespace=ns).complete)
         readline.parse_and_bind("tab: complete")
         readline.set_history_length(1000)
@@ -3094,11 +3112,14 @@ def CONSOLE(arround=5, frame=None):
     for c in range(lineNo - arround, lineNo + arround):
         if c > 0:
             prefix = "%-04s|" % c
-            if c == lineNo:   prefix = "---->"
+            if c == lineNo:
+                prefix = "---->"
             line = linecache.getline(fName, c, frame.f_globals)
-            if line != '':    lines.append(prefix + line)
+            if line != '':
+                lines.append(prefix + line)
             else:
-                if lines: lines[-1] = lines[-1] + "<EOF>\n"
+                if lines:
+                    lines[-1] = lines[-1] + "<EOF>\n"
                 break
     banner =  "".join(lines) + "file: %s:%s\n" % (fName, lineNo)
     try:

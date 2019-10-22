@@ -1,35 +1,14 @@
 # -*- coding: utf-8; mode: python -*-
-# pylint: disable=C0113,C0103,C0325
 u"""
     cdomain
     ~~~~~~~
 
     Replacement for the sphinx c-domain.
 
-    :copyright:  Copyright (C) 2016  Markus Heiser
+    :copyright:  Copyright (C) 2018 Markus Heiser
     :license:    GPL Version 2, June 1991 see Linux/COPYING for details.
 
-    List of customizations:
-
-    * Moved the *duplicate C object description* warnings for function
-      declarations in the nitpicky mode. See Sphinx documentation for
-      the config values for ``nitpick`` and ``nitpick_ignore``.
-
-    * Add option 'name' to the "c:function:" directive.  With option 'name' the
-      ref-name of a function can be modified. E.g.::
-
-          .. c:function:: int ioctl( int fd, int request )
-             :name: VIDIOC_LOG_STATUS
-
-      The func-name (e.g. ioctl) remains in the output but the ref-name changed
-      from 'ioctl' to 'VIDIOC_LOG_STATUS'. The function is referenced by::
-
-          * :c:func:`VIDIOC_LOG_STATUS` or
-          * :any:`VIDIOC_LOG_STATUS` (``:any:`` needs sphinx 1.3)
-
-     * Handle signatures of function-like macros well. Don't try to deduce
-       arguments types of function-like macros.
-
+    For user documentation see :ref:`customized-c-domain`.
 """
 
 from docutils import nodes
@@ -45,11 +24,11 @@ from sphinx.domains.c import CDomain as Base_CDomain
 __version__  = '1.0'
 
 # Get Sphinx version
-major, minor, patch = sphinx.version_info[:3]
+major, minor, patch = sphinx.version_info[:3]  # pylint: disable=invalid-name
 
-def setup(app):
+def setup(app):  # pylint: disable=missing-docstring
 
-    app.override_domain(CDomain)
+    app.add_domain(CDomain, override=True)
 
     return dict(
         version = __version__,
@@ -78,9 +57,9 @@ class CObject(Base_CObject):
         if not self.objtype == 'function':
             return False
 
-        m = c_funcptr_sig_re.match(sig)
+        m = c_funcptr_sig_re.match(sig)  # pylint: disable=invalid-name
         if m is None:
-            m = c_sig_re.match(sig)
+            m = c_sig_re.match(sig)      # pylint: disable=invalid-name
             if m is None:
                 raise ValueError('no match')
 
@@ -156,14 +135,16 @@ class CObject(Base_CObject):
                     ('single', indextext, targetname, '', None))
 
     def get_index_text(self, name):
-        if self.is_function_like_macro:
+        if self.is_function_like_macro:  # pylint: disable=no-else-return
             return _('%s (C macro)') % name
         else:
             return super(CObject, self).get_index_text(name)
 
 class CDomain(Base_CDomain):
 
-    """C language domain."""
+    """C language domain.
+
+    """
     name = 'c'
     label = 'C'
     directives = {
@@ -173,3 +154,4 @@ class CDomain(Base_CDomain):
         'type':     CObject,
         'var':      CObject,
     }
+    "Use :py:class:`CObject <linuxdoc.cdomain.CObject>` directives."

@@ -3,12 +3,12 @@
 /**
  * DOC: About Examples
  *
- * The file ``all-in-a-tumble.h`` includes all the referred examples of the
- * linuxdoc-HOWTO documentation. It is also used as a test of the kernel-doc
- * parser, to see how kernel-doc content will be rendered and where the parser
- * might fail.
+ * The files :ref:`all-in-a-tumble.c-src` and :ref:`all-in-a-tumble.h-src` are
+ * including all examples of the :ref:`linuxdoc-howto` documentation.  These
+ * files are also used as a test of the kernel-doc parser, to see how kernel-doc
+ * content will be rendered and where the parser might fail.
  *
- * The content itself is nonsense / don’t look to close ;-)
+ * And ... The content itself is nonsense / don’t look to close ;-)
  */
 
 // testing:
@@ -16,7 +16,16 @@
 // .. kernel-doc::  ./all-in-a-tumble.c
 //     :export:  ./all-in-a-tumble.h
 
+/* parse-SNIP:  EXPORT_SYMBOL */
 EXPORT_SYMBOL_GPL_FUTURE(user_function)
+
+int user_function(int a, ...)
+/* parse-SNAP: */
+
+/* parse-SNIP:  user_sum-h */
+int user_sum(int a, int b);
+/* parse-SNAP: */
+
 
 /**
  * block_touch_buffer - mark a buffer accessed
@@ -57,7 +66,7 @@ DEFINE_EVENT(block_buffer, block_dirty_buffer,
  * foo bar splat
  * -------------
  *
- * The only drawback to this gizmo is that is can sometimes damage hardware,
+ * The only drawback to this gizmo is that it can sometimes damage hardware,
  * software, or its subject(s).
  *
  * DOC: multiple DOC sections
@@ -66,6 +75,19 @@ DEFINE_EVENT(block_buffer, block_dirty_buffer,
  * comment block. To insert a new "DOC:" section, create a new comment block and
  * to create a sub-section use the reST markup for headings, see documentation
  * of function rst_mode()
+ */
+/* parse-SNAP: */
+
+/* parse-SNIP: lorem */
+/**
+ * DOC: lorem ipsum
+ *
+ * Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor
+ * incidunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+ * nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi
+ * consequat. Quis aute iure reprehenderit in voluptate velit esse cillum dolore
+ * eu fugiat nulla pariatur. Excepteur sint obcaecat cupiditat non proident,
+ * sunt in culpa qui officia deserunt mollit anim id est laborum.
  */
 /* parse-SNAP: */
 
@@ -209,8 +231,9 @@ typedef int my_typedef;
 /* parse-SNAP: */
 
 
+/* parse-SNIP: rst_mode */
 /**
- * rst_mode - short description of this function
+ * rst_mode - dummy to demonstrate reST & kernel-doc markup in comments
  * @a: first argument
  * @b: second argument
  * Context: :c:func:`in_gizmo_mode`.
@@ -334,11 +357,11 @@ typedef int my_typedef;
  * lorem ipsum
  *
  */
-
 int rst_mode(int a, char *b)
 {
   return a + b;
 }
+/* parse-SNAP: */
 
 
 /* parse-markup: kernel-doc */

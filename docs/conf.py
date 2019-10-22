@@ -2,7 +2,6 @@
 #
 # Sphinx documentation build configuration file
 
-import re
 import linuxdoc
 import sphinx_rtd_theme
 
@@ -14,6 +13,7 @@ project   = 'LinuxDoc'
 copyright = linuxdoc.__copyright__
 version   = linuxdoc.__version__
 release   = linuxdoc.__version__
+author    = 'return42'
 show_authors = True
 
 extensions = [
@@ -39,6 +39,7 @@ html_context = {
         '_static/theme_overrides.css',
     ],
 }
+html_logo = 'darmarIT_logo_128.png'
 
 # since https://h2626237.stratoserver.net/ is self-signed, disable tls verify
 tls_verify = False
@@ -46,6 +47,12 @@ intersphinx_mapping = {}
 intersphinx_mapping['template-book'] = ('https://h2626237.stratoserver.net/kernel/books/template-book/', None)
 intersphinx_mapping['process'] = ('https://h2626237.stratoserver.net/kernel/books/process/', None)
 #intersphinx_mapping['linux'] = ('https://h2626237.stratoserver.net/kernel/linux_src_doc/', None)
+
+extlinks = {}
+# usage:    :mid:`<mail's Message-ID>`  e.g.
+extlinks['mid'] = ('http://mid.mail-archive.com/%s', '')
+extlinks['lwn'] = ('https://lwn.net/Articles/%s', 'LWN article #')
+extlinks['rst-directive'] = ('http://docutils.sourceforge.net/docs/ref/rst/directives.html#%s', '')
 
 # ------------------------------------------------------------------------------
 # Options of the kernel-doc parser
@@ -72,7 +79,11 @@ kernel_doc_mode = "reST"
 # you want to create man pages for those kernel-doc directives, which has not
 # been set a ``:man-sect:`` value.
 # Default: None
-kernel_doc_mansect = 9
+kernel_doc_mansect = None
+
+# One entry per manual page. List of tuples
+# (source start file, name, description, authors, manual section).
+man_pages = [ ]
 
 # In nickpick mode, it will complain about lots of missing references that
 #

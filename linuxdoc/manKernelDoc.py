@@ -1,56 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; mode: python -*-
-# pylint: disable=C1801
-
+# pylint: disable=missing-docstring, invalid-name
 u"""
     kernel-doc-man
     ~~~~~~~~~~~~~~
 
     Implementation of the ``kernel-doc-man`` builder.
 
-    :copyright:  Copyright (C) 2016  Markus Heiser
+    :copyright:  Copyright (C) 2018 Markus Heiser
     :license:    GPL Version 2, June 1991 see Linux/COPYING for details.
 
-    The ``kernel-doc-man`` (:py:class:`KernelDocManBuilder`) produces manual
-    pages in the groff format. It is a *man* page sphinx-builder mainly written
-    to generate manual pages from kernel-doc comments by :
-
-    * scanning the master doc-tree for sections marked with the
-      ``.. kernel-doc-man::`` directive and build manual pages for theses
-      sections.
-
-    * reorder / rename (sub-) sections according to the conventions that should
-      be employed when writing man pages for the Linux man-pages project, see
-      man-pages(7)
-
-    Usage::
-
-        $ sphinx-build -b kernel-doc-man
-
-    rest-Markup entry (e.g)::
-
-        .. kernel-doc-man::  manpage-name.9
-
-    Since the ``kernel-doc-man`` is an extension of the common `sphinx *man*
-    builder
-    <http://www.sphinx-doc.org/en/stable/config.html#confval-man_pages>`_, it is
-    also a full replacement, building booth, the common sphinx man-pages and
-    those marked with the ``.. kernel-doc-man::`` directive.
-
-    Mostly authors will use this feature in their reST documents in conjunction
-    with the ``.. kernel-doc::`` :ref:`directive
-    <kernel-doc-directive>`, to create man pages from kernel-doc
-    comments.  This could be done, by setting the man section number with the
-    option ``man-sect``, e.g.::
-
-      .. kernel-doc:: include/linux/debugobjects.h
-          :man-sect: 9
-          :internal:
-
-    With this ``:man-sect: 9`` option, the kernel-doc parser will insert a
-    ``.. kernel-doc-man:: <declaration-name>.<man-sect no>`` directive in the
-    reST output, for every section describing a function, union etc.
-
+    User documentation see :ref:`man-pages`.
 """
 
 # ==============================================================================
@@ -71,12 +31,16 @@ from docutils.transforms import Transform
 import sphinx
 from sphinx import addnodes
 from sphinx.util.nodes import inline_all_toctrees
-from sphinx.util.console import bold, darkgreen     # pylint: disable=E0611
+from sphinx.util.console import bold, darkgreen  # pylint: disable=no-name-in-module
 from sphinx.writers.manpage import ManualPageWriter
 
 from sphinx.builders.manpage import ManualPageBuilder
 
 from .kernel_doc import Container
+from . import compat
+
+from sphinx.util import logging
+logger = logging.getLogger(__name__)
 
 # ==============================================================================
 # common globals
@@ -94,8 +58,7 @@ def setup(app):
 
     app.add_builder(KernelDocManBuilder)
     app.add_directive("kernel-doc-man", KernelDocMan)
-    major, minor, patch = sphinx.version_info[:3]  # pylint: disable=invalid-name
-    if major == 1 and minor < 8:
+    if compat.major == 1 and compat.minor < 8:
         app.add_config_value('author', "", 'env')
     app.add_node(kernel_doc_man
                  , html    = (skip_kernel_doc_man, None)
@@ -111,11 +74,12 @@ def setup(app):
     )
 
 # ==============================================================================
-class kernel_doc_man(nodes.Invisible, nodes.Element):    # pylint: disable=C0103
+class kernel_doc_man(  # pylint: disable=invalid-name
+        nodes.Invisible, nodes.Element):
 # ==============================================================================
     """Node to mark a section as *manpage*"""
 
-def skip_kernel_doc_man(self, node):                     # pylint: disable=W0613
+def skip_kernel_doc_man(self, node):  # pylint: disable=unused-argument
     raise nodes.SkipNode
 
 
@@ -137,7 +101,7 @@ class Section2Manpage(Transform):
     u"""Transforms a *section* tree into an *manpage* tree.
 
     The structural layout of a man-page differs from the one produced, by the
-    kernel-doc parser. The kernel-doc parser produce reST which fits to *normal*
+    kernel-doc parser.  The kernel-doc parser produce reST which fits to *normal*
     documentation, e.g. the declaration of a function in reST is like.
 
     .. code-block:: rst
@@ -206,11 +170,11 @@ class Section2Manpage(Transform):
     manTitleOrder = [t for r,t in manTitles]
 
     @classmethod
-    def getFirstChild(cls, subtree, *classes):
-        for c in classes:
+    def sec2man_get_first_child(cls, subtree, *classes):
+        for _c in classes:
             if subtree is None:
                 break
-            idx = subtree.first_child_matching_class(c)
+            idx = subtree.first_child_matching_class(_c)
             if idx is None:
                 subtree = None
                 break
@@ -220,13 +184,13 @@ class Section2Manpage(Transform):
     def strip_man_info(self):
         section  = self.document[0]
         man_info = Container(authors=[])
-        man_node = self.getFirstChild(section, kernel_doc_man)
+        man_node = self.sec2man_get_first_child(section, kernel_doc_man)
         name, sect = (man_node["manpage"].split(".", -1) + [DEFAULT_MAN_SECT])[:2]
         man_info["manpage"] = name
         man_info["mansect"] = sect
 
         # strip field list
-        field_list = self.getFirstChild(section, nodes.field_list)
+        field_list = self.sec2man_get_first_child(section, nodes.field_list)
         if field_list:
             field_list.parent.remove(field_list)
             for field in field_list:
@@ -240,9 +204,9 @@ class Section2Manpage(Transform):
                 man_info["authors"].append("%s <%s>" % (auth, adr))
 
         # strip *purpose*
-        desc_content = self.getFirstChild(
+        desc_content = self.sec2man_get_first_child(
             section, addnodes.desc, addnodes.desc_content)
-        if not len(desc_content):
+        if not desc_content or not len(desc_content): # pylint: disable=len-as-condition
             # missing initial short description in kernel-doc comment
             man_info.subtitle = ""
         else:
@@ -250,11 +214,11 @@ class Section2Manpage(Transform):
             del desc_content[0]
 
         # remove section title
-        old_title = self.getFirstChild(section, nodes.title)
+        old_title = self.sec2man_get_first_child(section, nodes.title)
         old_title.parent.remove(old_title)
 
         # gather type of the declaration
-        decl_type = self.getFirstChild(
+        decl_type = self.sec2man_get_first_child(
             section, addnodes.desc, addnodes.desc_signature, addnodes.desc_type)
         if decl_type is not None:
             decl_type = decl_type.astext().strip()
@@ -266,10 +230,10 @@ class Section2Manpage(Transform):
 
         return man_info
 
-    def isolateSections(self, sec_by_title):
+    def isolate_sections(self, sec_by_title):
         section = self.document[0]
         while True:
-            sect = self.getFirstChild(section, nodes.section)
+            sect = self.sec2man_get_first_child(section, nodes.section)
             if not sect:
                 break
             sec_parent = sect.parent
@@ -279,7 +243,7 @@ class Section2Manpage(Transform):
                 # drop target / is useless in man-pages
                 del sec_parent[target_idx]
             title = sect[0].astext().upper()
-            for r, man_title in self.manTitles:
+            for r, man_title in self.manTitles:  # pylint: disable=invalid-name
                 if r.search(title):
                     title = man_title
                     sect[0].replace_self(nodes.title(text = title))
@@ -289,9 +253,9 @@ class Section2Manpage(Transform):
 
         return sec_by_title
 
-    def isolateSynopsis(self, sec_by_title):
+    def isolate_synopsis(self, sec_by_title):
         synopsis = None
-        c_desc = self.getFirstChild(self.document[0], addnodes.desc)
+        c_desc = self.sec2man_get_first_child(self.document[0], addnodes.desc)
         if c_desc is not None:
             c_desc.parent.remove(c_desc)
             synopsis = nodes.section()
@@ -300,16 +264,16 @@ class Section2Manpage(Transform):
             sec_by_title["SYNOPSIS"] = sec_by_title.get("SYNOPSIS", []) + [synopsis]
         return sec_by_title
 
-    def apply(self):
+    def apply(self, **kwargs):
         self.document.man_info = self.strip_man_info()
         sec_by_title = collections.OrderedDict()
 
-        self.isolateSections(sec_by_title)
+        self.isolate_sections(sec_by_title)
         # On struct, enum, union, typedef, the SYNOPSIS is taken from the
         # DEFINITION section.
         if self.document.man_info.decl_type not in [
                 "struct", "enum", "union", "typedef"]:
-            self.isolateSynopsis(sec_by_title)
+            self.isolate_synopsis(sec_by_title)
 
         for sec_name in self.manTitleOrder:
             sec_list = sec_by_title.pop(sec_name,[])
@@ -332,11 +296,11 @@ class KernelDocManBuilder(ManualPageBuilder):
     def init(self):
         pass
 
-    def is_manpage(self, node):               # pylint: disable=R0201
+    def is_manpage(self, node):  # pylint: disable=no-self-use
         if isinstance(node, nodes.section):
             return bool(
-                Section2Manpage.getFirstChild(
-                node, kernel_doc_man) is not None)
+                Section2Manpage.sec2man_get_first_child(
+                    node, kernel_doc_man) is not None)
         return False
 
     def prepare_writing(self, docnames):
@@ -347,7 +311,7 @@ class KernelDocManBuilder(ManualPageBuilder):
         """Where you actually write something to the filesystem."""
         pass
 
-    def get_partial_document(self, children): # pylint: disable=R0201
+    def get_partial_document(self, children):  # pylint: disable=no-self-use
         doc_tree =  new_document('<output>')
         doc_tree += children
         return doc_tree
@@ -356,21 +320,20 @@ class KernelDocManBuilder(ManualPageBuilder):
         if self.config.man_pages:
             # build manpages from config.man_pages as usual
             ManualPageBuilder.write(self, *ignored)
-            # FIXME:
 
-        self.info(bold("scan master tree for kernel-doc man-pages ... ") + darkgreen("{"), nonl=True)
+        logger.info(bold("scan master tree for kernel-doc man-pages ... ") + darkgreen("{"), nonl=True)
 
         master_tree = self.env.get_doctree(self.config.master_doc)
         master_tree = inline_all_toctrees(
             self, set(), self.config.master_doc, master_tree, darkgreen, [self.config.master_doc])
-        self.info(darkgreen("}"))
+        logger.info(darkgreen("}"))
         man_nodes   = master_tree.traverse(condition=self.is_manpage)
         if not man_nodes and not self.config.man_pages:
-            self.warn('no "man_pages" config value nor manual section found; no manual pages '
-                      'will be written')
+            logger.warn('no "man_pages" config value nor manual section found; no manual pages '
+                        'will be written')
             return
 
-        self.info(bold('writing man pages ... '), nonl=True)
+        logger.info(bold('START writing man pages ... '), nonl=True)
 
         for man_parent in man_nodes:
 
@@ -398,14 +361,14 @@ class KernelDocManBuilder(ManualPageBuilder):
                 destination_path = path.join(self.outdir, targetname)
                 , encoding='utf-8')
 
-            self.info(darkgreen(targetname) + " ", nonl=True)
+            logger.info(darkgreen(targetname) + " ", nonl=True)
             self.env.resolve_references(doc_tree, doc_tree.man_info.manpage, self)
 
             # remove pending_xref nodes
             for pendingnode in doc_tree.traverse(addnodes.pending_xref):
                 pendingnode.replace_self(pendingnode.children)
             doc_writer.write(doc_tree, destination)
-        self.info()
+        logger.info("END writing man pages.")
 
 
     def finish(self):

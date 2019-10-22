@@ -1,5 +1,8 @@
 # -*- coding: utf-8; mode: python -*-
-# pylint: disable=R0912,C1801
+#
+# pylint: disable=missing-docstring, arguments-differ, invalid-name
+# pylint: disable=too-many-arguments, too-many-locals, too-many-branches
+# pylint: disable=too-many-nested-blocks, useless-object-inheritance
 
 u"""
     flat-table
@@ -7,34 +10,10 @@ u"""
 
     Implementation of the ``flat-table`` reST-directive.
 
-    :copyright:  Copyright (C) 2016  Markus Heiser
+    :copyright:  Copyright (C) 2018 Markus Heiser
     :license:    GPL Version 2, June 1991 see linux/COPYING for details.
 
-    The ``flat-table`` (:py:class:`FlatTable`) is a double-stage list similar to
-    the ``list-table`` with some additional features:
-
-    * *column-span*: with the role ``cspan`` a cell can be extended through
-      additional columns
-
-    * *row-span*: with the role ``rspan`` a cell can be extended through
-      additional rows
-
-    * *auto-span* rightmost cell of a table row over the missing cells on the
-      right side of that table-row.  With Option ``:fill-cells:`` this behavior
-      can changed from *auto span* to *auto fill*, which automaticly inserts
-      (empty) cells instead of spanning the last cell.
-
-    Options:
-
-    * header-rows:   [int] count of header rows
-    * stub-columns:  [int] count of stub columns
-    * widths:        [[int] [int] ... ] widths of columns
-    * fill-cells:    instead of autospann missing cells, insert missing cells
-
-    roles:
-
-    * cspan: [int] additionale columns (*morecols*)
-    * rspan: [int] additionale rows (*morerows*)
+    User documentation see :ref:`rest-flat-table`
 """
 
 # ==============================================================================
@@ -60,7 +39,6 @@ PY3 = sys.version_info[0] == 3
 PY2 = sys.version_info[0] == 2
 
 if PY3:
-    # pylint: disable=C0103, W0622
     unicode     = str
     basestring  = str
 
@@ -79,9 +57,9 @@ def setup(app):
     )
 
 # ==============================================================================
-def c_span(name, rawtext, text, lineno, inliner, options=None, content=None):
+def c_span(  # pylint: disable=unused-argument
+        name, rawtext, text, lineno, inliner, options=None, content=None):
 # ==============================================================================
-    # pylint: disable=W0613
 
     options  = options if options is not None else {}
     content  = content if content is not None else []
@@ -90,9 +68,9 @@ def c_span(name, rawtext, text, lineno, inliner, options=None, content=None):
     return nodelist, msglist
 
 # ==============================================================================
-def r_span(name, rawtext, text, lineno, inliner, options=None, content=None):
+def r_span(  # pylint: disable=unused-argument
+        name, rawtext, text, lineno, inliner, options=None, content=None):
 # ==============================================================================
-    # pylint: disable=W0613
 
     options  = options if options is not None else {}
     content  = content if content is not None else []
@@ -100,11 +78,15 @@ def r_span(name, rawtext, text, lineno, inliner, options=None, content=None):
     msglist  = []
     return nodelist, msglist
 
+# ==============================================================================
+class rowSpan(nodes.General, nodes.Element):
+# ==============================================================================
+    pass
 
 # ==============================================================================
-class rowSpan(nodes.General, nodes.Element): pass # pylint: disable=C0103,C0321
-class colSpan(nodes.General, nodes.Element): pass # pylint: disable=C0103,C0321
+class colSpan(nodes.General, nodes.Element):
 # ==============================================================================
+    pass
 
 # ==============================================================================
 class FlatTable(Table):
@@ -113,6 +95,10 @@ class FlatTable(Table):
     u"""FlatTable (``flat-table``) directive"""
 
     option_spec = {
+
+        # see https://github.com/PyCQA/pylint/issues/289
+        # pylint: disable=bad-continuation
+
         'name': directives.unchanged
         , 'class': directives.class_option
         , 'header-rows': directives.nonnegative_int
@@ -136,7 +122,7 @@ class FlatTable(Table):
         tableBuilder = ListTableBuilder(self)
         tableBuilder.parseFlatTableNode(node)
         tableNode = tableBuilder.buildTableNode()
-        # SDK.CONSOLE()  # print --> tableNode.asdom().toprettyxml()
+        # debug --> tableNode.asdom().toprettyxml()
         if title:
             tableNode.insert(0, title)
         return [tableNode] + messages
@@ -196,7 +182,7 @@ class ListTableBuilder(object):
             tbody += self.buildTableRowNode(row)
         return table
 
-    def buildTableRowNode(self, row_data, classes=None): # pylint: disable=R0201
+    def buildTableRowNode(self, row_data, classes=None):  # pylint: disable=no-self-use
         classes = [] if classes is None else classes
         row = nodes.row()
         for cell in row_data:
@@ -263,17 +249,17 @@ class ListTableBuilder(object):
                 for c in range(cspan):
                     try:
                         self.rows[y].insert(x+c+1, None)
-                    except: # pylint: disable=W0702
+                    except Exception:  # pylint: disable=broad-except
                         # the user sets ambiguous rowspans
-                        pass # SDK.CONSOLE()
+                        pass
                 # handle colspan in spanned rows
                 for r in range(rspan):
                     for c in range(cspan + 1):
                         try:
                             self.rows[y+r+1].insert(x+c, None)
-                        except: # pylint: disable=W0702
+                        except Exception:  # pylint: disable=broad-except
                             # the user sets ambiguous rowspans
-                            pass # SDK.CONSOLE()
+                            pass
                 x += 1
             y += 1
 
@@ -299,7 +285,7 @@ class ListTableBuilder(object):
                     cspan, rspan, content = row[-1]
                     row[-1] = (cspan + x, rspan, content)
             elif x and fill_cells:
-                for i in range(x):
+                for _i in range(x):
                     row.append( (0, 0, nodes.comment()) )
 
     def pprint(self):
@@ -331,8 +317,7 @@ class ListTableBuilder(object):
         target  = None
 
         for child in rowItem:
-            if (isinstance(child , nodes.comment)
-                or isinstance(child, nodes.system_message)):
+            if isinstance(child, (nodes.comment, nodes.system_message)):
                 pass
             elif isinstance(child , nodes.target):
                 target = child
@@ -357,11 +342,11 @@ class ListTableBuilder(object):
             row.append( (cspan, rspan, cellElements) )
         return row
 
-    def parseCellItem(self, cellItem):
+    def parseCellItem(self, cellItem):  # pylint: disable=no-self-use
         # search and remove cspan, rspan colspec from the first element in
         # this listItem (field).
         cspan = rspan = 0
-        if not len(cellItem):
+        if not len(cellItem): # pylint: disable=len-as-condition
             return cspan, rspan, []
         for elem in cellItem[0]:
             if isinstance(elem, colSpan):
