@@ -338,7 +338,9 @@ class DevNull(object): # pylint: disable=too-few-public-methods
         pass
 DevNull = DevNull()
 
-SRCTREE        = OS_ENV.get("srctree", "")
+SRCTREE        = os.getenv("srctree", "")
+KBUILD_VERBOSE = int(os.getenv("KBUILD_VERBOSE", "0"))
+KERNELVERSION  = os.getenv("KERNELVERSION", "unknown kernel version")
 GIT_REF        = ("Linux kernel source tree:"
                   " `%(rel_fname)s <https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/"
                   "%(rel_fname)s>`__")

@@ -14,8 +14,7 @@ description  = 'Sphinx-doc extensions & tools to extract documentation from C/C+
 license      = 'GPLv2'
 keywords     = 'sphinx extension doc source code comments kernel-doc linux'
 
-install_requires = [
-    'fspath' ]
+install_requires = []
 
 def get_entry_points():
     """get entry points of the python package"""

@@ -21,10 +21,9 @@ u"""
 # ------------------------------------------------------------------------------
 
 import argparse
+import os
 import re
 import sys
-
-from fspath import FSPath
 
 DESCRIPTION = """ The 'kernel-grepdoc' command scans ``*.rst`` files from kernel's
 ``./Documentation`` source tree and filters all 'kernel-doc' directives.  The
