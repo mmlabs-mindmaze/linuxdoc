@@ -1,9 +1,10 @@
 Source: linuxdoc
 Maintainer: Gabriel Ganne <gabriel.ganne@mindmaze.ch>
+Uploaders: Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
 Section: utils
 Priority: extra
 Standards-Version: 3.9.8
-Vcs-browser: https://intranet.mindmaze.ch/bitbucket/scm/mmlab/linuxdoc.git
+Vcs-browser: https://review.gerrithub.io/admin/repos/mmlabs-mindmaze/linuxdoc
 Homepage: https://return42.github.io/linuxdoc
 Build-Depends: debhelper (>= 10), dh-python, python3-sphinx, python3-docutils,
  python3-all, python3-setuptools
