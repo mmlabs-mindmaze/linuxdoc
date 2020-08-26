@@ -304,8 +304,8 @@ def highlight_parser(text, map_table):
                 block_indent = indent
                 in_rows.insert(0, row)
                 continue
-            else:
-                out.append(row)
+
+            out.append(row)
 
     return "\n".join(out)
 
@@ -745,6 +745,7 @@ class NullTranslator(TranslatorAPI):
     HIGHLIGHT_MAP = []
     LINE_COMMENT = ("", "")
 
+    # pylint: disable=signature-differs
     def output_preamble(self, *args, **kwargs):
         pass
     def output_epilog(self, *args, **kwargs):
@@ -3085,6 +3086,7 @@ class Parser(SimpleLog):
 # ==============================================================================
 
 def CONSOLE(arround=5, frame=None):
+    # pylint: disable=import-outside-toplevel
 
     import inspect
     import code
