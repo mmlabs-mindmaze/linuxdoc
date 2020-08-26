@@ -1,3 +1,10 @@
+linuxdoc (20200812+mm1) unstable; urgency=medium
+
+  * Update with new sphinx-doc:
+    - support sphinx 3
+
+ -- Nicolas Bourdaud <nicolas.bourdaud@gmail.com>  Wed, 26 Aug 2020 15:14:43 +0200
+
 linuxdoc (1.0.1) unstable; urgency=medium
 
   * Add Nicolas Bourdaud to the package maintainers
